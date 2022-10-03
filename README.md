@@ -132,9 +132,23 @@ $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --
 ```log
 # cd examples/
 $ go run main.go 
-  2021/12/05 12:46:13 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjFiOTk1YmVkOGFmY2JlZDhkZTEzOTIyMzgxOTUzNmYxYjdiOGY1YzRjZmUzMDk1ZDE5OTRmYzdjODUyMDYzNzgiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE2Mzg3MjY0MzMsImlzcyI6InRlc3QifQ.OxfU7sX4URX_VAVsEkjiS0hs8xHrygB6lZC950FFdmzD8LDu5ArSJ1HY-geS2Cscyvo5bbQLAFb0GcTk_UvW8bslLOiPWbPTXRY1a6DsXi4zCfdj939HkmAkkuS017Onk0JuPNYcT2TNRZIW8UCgNFcyfYS3cUyjf-ZgEjwh2-Y18iIQbDGXSZuFDB1aERpGhlgt-7ZMKIa_62TmcRYjcdXrJozycLy48fKviIAus6Z9PkvbIzk_Le8kSC5GwN5UTfK8obHTTVx-_6iyXOq6ZKKzrlXnpYuwnoZrWeHQOUf8Den1ibSbclnyQcIFCWp3D6p4oK1lsq3RJ3n3n2ZTJA
-  2021/12/05 12:46:13      verified with YK PublicKey
-  2021/12/05 12:46:13      verified with exported PubicKey
+
+$ go run main.go 
+2022/10/03 06:26:19      PublicKey: 
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4qjbdskV5yP/dOKVPTe4
+S9HxnVC9wP1NqS/sqqQ4ZDXu5Ffkv/6hlefHj99W27jEaAA6iEK2U7qQKVsDJqAq
+G888ZA+72NnxZ6FKUI7d7o+gZP8p/sTyfLdNmIhlRWclAahS6/845jThUf/OkZi4
+54gRT2RECDRSwfU/qOLCKUPc7Adpc14MNrzD52Grozj4MyzNInVJWP3rBSMfyDT9
+CULfrhc2FlqdkQsp4F2QY6CLXixQxVXW/ejjTezlFWz9a6tqFQV3jfYY6qBYAdDF
+0/U5IlVYTeMAU4Sjfmum7JdAHx6HpAw6mGIQG5w1LzEaTggmavd/dkyywI7yZC7A
+iQIDAQAB
+-----END PUBLIC KEY-----
+2022/10/03 06:26:19 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6InJTcGs2S050TXhvejNuYW9tTFNnWDJGVlBaZ2cxajVnMVJIWVVkamE0U2ciLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE2NjQ3OTI4MzksImlzcyI6InRlc3QifQ.H_iag9Cm1O9jWkDnayz0grz4dEpWoIoYaoqptwGGnOn8qNBzNQCspk3jMpKV-rFnxAiRfslqnI8-Y8cObqtZxoJ9f7DfnqUycJGG-4yG7m1-VYdOcJe3LIH0mtqdHOf_XtlXaLxKpiCxnMn0H9WL541SW3JwONvLIKHeZgsn2j03I9bsN5k7-cHzofowIf_iPAF-N9GoTt0ukh0FdIcQYOH4mU5XVE_zObTmF-bfQ_83pLYcOEUDDMm9Tv6Mnw9_GqUtuqLN-4X_17jXaGjQm7pEapaDdvKWiEZkWtcKxu0PA6hXjcsHVN7WH5g4YaRoXlGLKFH6Nmu6hIMYFqewBg
+2022/10/03 06:26:19      verified with PublicKey
+2022/10/03 06:26:19      verified with exported PubicKey
+
+
 ```
 
 The JWT is formatted as:
@@ -142,16 +156,24 @@ The JWT is formatted as:
 ```json
 {
   "alg": "RS256",
-  "kid": "1b995bed8afcbed8de139223819536f1b7b8f5c4cfe3095d1994fc7c85206378",
+  "kid": "rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg",
   "typ": "JWT"
 }
 {
-  "exp": 1638726433,
+  "exp": 1664792839,
   "iss": "test"
 }
 ```
 
-Note for SoftHSM, the keyID: `1b995bed8afcbed8de139223819536f1b7b8f5c4cfe3095d1994fc7c85206378`...is the sha256Hash of the publicKey
+Where the `keyID` is the base64 encoded hash of the DER public key
+
+```bash
+$ openssl rsa -pubin -in publickey.pem -outform DER | openssl sha256
+writing RSA key
+SHA256(stdin)= ad2a64e8a36d331a33de76a898b4a05f61553d9820d63e60d511d851d8dae128
+
+# base64 of hex ad2a64e8a36d331a33de76a898b4a05f61553d9820d63e60d511d851d8dae128 --> rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg
+```
 
 to use, just import the library (`"github.com/salrashid123/golang-jwt-pkcs11"`) configure the Yubikey wiht the pin.  Remember to set the override so that the correct `alg` is defined in the JWT header
 

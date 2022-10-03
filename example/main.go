@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"log"
 	"time"
 
@@ -74,6 +76,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize pkcsJWT: %v", err)
 	}
+
+	ap := config.GetPublicKey()
+	akBytes, err := x509.MarshalPKIXPublicKey(ap)
+	if err != nil {
+		log.Fatalf("Unable to convert ekpub: %v", err)
+	}
+
+	rakPubPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: akBytes,
+		},
+	)
+	log.Printf("     PublicKey: \n%v", string(rakPubPEM))
 
 	token.Header["kid"] = config.GetKeyID()
 	tokenString, err := token.SignedString(keyctx)

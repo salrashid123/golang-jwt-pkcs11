@@ -6,8 +6,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -85,14 +85,13 @@ func NewPKContext(parent context.Context, val *PKConfig) (context.Context, error
 
 		rkey, ok := priv.Public().(*rsa.PublicKey)
 		if ok {
-			plaintext := []byte(rkey.N.String())
-			h := sha256.New()
-			_, err = h.Write(plaintext)
+			der, err := x509.MarshalPKIXPublicKey(rkey)
 			if err != nil {
-				return nil, fmt.Errorf("%v", err)
+				return nil, fmt.Errorf("pkcsjwt: error converting public key: %v", err)
 			}
-			plaintextHash := h.Sum([]byte{})
-			val.KeyID = hex.EncodeToString(plaintextHash)
+			hasher := sha256.New()
+			hasher.Write(der)
+			val.KeyID = base64.RawStdEncoding.EncodeToString(hasher.Sum(nil))
 		}
 	}
 
