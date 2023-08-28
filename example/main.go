@@ -40,6 +40,7 @@ func main() {
 		Pin:        "mynewpin",
 		TokenLabel: "token1",
 		KeyLabel:   "keylabel1",
+		KeyID:      "12345",
 		//PKCS_ID:    hex_id,
 		//SlotNumber: slotNum,
 		Path: "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
@@ -91,7 +92,10 @@ func main() {
 	)
 	log.Printf("     PublicKey: \n%v", string(rakPubPEM))
 
-	token.Header["kid"] = config.GetKeyID()
+	if config.GetKeyID() != "" {
+		token.Header["kid"] = config.GetKeyID()
+	}
+
 	tokenString, err := token.SignedString(keyctx)
 	if err != nil {
 		log.Fatalf("Error signing %v", err)

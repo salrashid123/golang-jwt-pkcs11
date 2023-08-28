@@ -165,7 +165,7 @@ The JWT is formatted as:
 }
 ```
 
-Where the `keyID` is the base64 encoded hash of the DER public key
+Where the `keyID` is the base64 encoded hash of the DER public key as shown below (it can be anything you want)
 
 ```bash
 $ openssl rsa -pubin -in publickey.pem -outform DER | openssl sha256
@@ -218,6 +218,7 @@ func main() {
 		Pin:        "mynewpin",
 		TokenLabel: "token1",
 		KeyLabel:   "keylabel1",
+    KeyId:      "rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg",
 		//PKCS_ID:    hex_id,
 		//SlotNumber: slotNum,
 		Path: "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
@@ -255,7 +256,9 @@ func main() {
 		log.Fatalf("Unable to initialize pkcsJWT: %v", err)
 	}
 
-	token.Header["kid"] = config.GetKeyID()
+	if config.GetKeyID() != "" {
+		token.Header["kid"] = config.GetKeyID()
+	}
 	tokenString, err := token.SignedString(keyctx)
 	if err != nil {
 		log.Fatalf("Error signing %v", err)
