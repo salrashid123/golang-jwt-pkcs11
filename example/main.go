@@ -17,6 +17,8 @@ func main() {
 
 	ctx := context.Background()
 
+	log.Println("-------------- RS256 --------------")
+
 	var keyctx interface{}
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(time.Minute * 1).Unix(),
@@ -129,5 +131,82 @@ func main() {
 	if v.Valid {
 		log.Println("     verified with exported PubicKey")
 	}
+
+	// ****************************************************************
+
+	log.Println("-------------- ES256 --------------")
+	// ES256
+
+	pk.SigningMethodPKES256.Override()
+	estoken := jwt.NewWithClaims(pk.SigningMethodPKES256, claims)
+
+	esconfig := &pk.PKConfig{
+		Pin:        "mynewpin",
+		TokenLabel: "token1",
+		KeyLabel:   "keylabel2",
+		KeyID:      "12345",
+		//PKCS_ID:    hex_id,
+		//SlotNumber: slotNum,
+		Path: "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
+	}
+
+	eskeyctx, err := pk.NewPKContext(ctx, esconfig)
+	if err != nil {
+		log.Fatalf("Unable to initialize pkcsJWT: %v", err)
+	}
+
+	esap := esconfig.GetPublicKey()
+	esakBytes, err := x509.MarshalPKIXPublicKey(esap)
+	if err != nil {
+		log.Fatalf("Unable to convert ekpub: %v", err)
+	}
+
+	esPubPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: esakBytes,
+		},
+	)
+	log.Printf("     PublicKey: \n%v", string(esPubPEM))
+
+	if esconfig.GetKeyID() != "" {
+		estoken.Header["kid"] = esconfig.GetKeyID()
+	}
+
+	estokenString, err := estoken.SignedString(eskeyctx)
+	if err != nil {
+		log.Fatalf("Error signing %v", err)
+	}
+
+	log.Printf("Token: %s", estokenString)
+
+	// verify with TPM based publicKey
+	eskeyFunc, err := pk.YKVerfiyKeyfunc(ctx, esconfig)
+	if err != nil {
+		log.Fatalf("could not get keyFunc: %v", err)
+	}
+
+	esvtoken, err := jwt.Parse(estokenString, eskeyFunc)
+	if err != nil {
+		log.Fatalf("Error verifying token %v", err)
+	}
+	if esvtoken.Valid {
+		log.Println("     verified with PublicKey")
+	}
+
+	// verify with provided RSAPublic key
+	eepubKey := esconfig.GetPublicKey()
+
+	ev, err := jwt.Parse(estokenString, func(token *jwt.Token) (interface{}, error) {
+		return eepubKey, nil
+	})
+	if err != nil {
+		log.Printf("     Error Parsing %v", err)
+	}
+	if ev.Valid {
+		log.Println("     verified with exported PubicKey")
+	}
+
+	// ****************************************************************
 
 }

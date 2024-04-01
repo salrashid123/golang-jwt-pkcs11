@@ -3,10 +3,14 @@ package pkcs11jwt
 import (
 	"context"
 	"crypto"
+	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math/big"
+
+	"encoding/asn1"
 
 	jwt "github.com/golang-jwt/jwt"
 
@@ -38,6 +42,7 @@ func (k *PKConfig) GetPublicKey() crypto.PublicKey {
 var (
 	SigningMethodPKRS128 *SigningMethodPK
 	SigningMethodPKRS256 *SigningMethodPK
+	SigningMethodPKES256 *SigningMethodPK
 	errMissingConfig     = errors.New("pp: missing configuration in provided context")
 	errMissingYK         = errors.New("pk: YK device not available")
 )
@@ -95,6 +100,16 @@ func init() {
 	}
 	jwt.RegisterSigningMethod(SigningMethodPKRS256.Alg(), func() jwt.SigningMethod {
 		return SigningMethodPKRS256
+	})
+
+	// ES256
+	SigningMethodPKES256 = &SigningMethodPK{
+		"PKES256",
+		jwt.SigningMethodES256,
+		crypto.SHA256,
+	}
+	jwt.RegisterSigningMethod(SigningMethodPKES256.Alg(), func() jwt.SigningMethod {
+		return SigningMethodPKES256
 	})
 }
 
@@ -171,6 +186,27 @@ func (s *SigningMethodPK) Sign(signingString string, key interface{}) (string, e
 	signedBytes, err := signer.Sign(rng, hashed, crypto.SHA256)
 	if err != nil {
 		return "", fmt.Errorf(" error from signing from YubiKey: %v", err)
+	}
+
+	if s.alg == "ES256" {
+		epub := priv.Public().(*ecdsa.PublicKey)
+		curveBits := epub.Curve.Params().BitSize
+		keyBytes := curveBits / 8
+		if curveBits%8 > 0 {
+			keyBytes += 1
+		}
+		out := make([]byte, 2*keyBytes)
+
+		var esig struct {
+			R, S *big.Int
+		}
+		if _, err := asn1.Unmarshal(signedBytes, &esig); err != nil {
+			return "", err
+		}
+
+		esig.R.FillBytes(out[0:keyBytes])
+		esig.S.FillBytes(out[keyBytes:])
+		return base64.RawURLEncoding.EncodeToString(out), nil
 	}
 
 	return base64.RawURLEncoding.EncodeToString(signedBytes), nil

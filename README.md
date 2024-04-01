@@ -19,7 +19,8 @@ for reference, see
 
 ### Supported Algorithms
 
-* `RSA-2048`
+* `RS256`
+* `ES256`
 
 (i just didn't'' have the time to account for the additional types)
 
@@ -126,6 +127,28 @@ $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --
         ID:         4142
         Usage:      encrypt, verify, wrap
         Access:     local
+
+
+### now create an EC key   p256 oid=1.2.840.10045.3.1.7
+pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --key-type ec:prime256v1 --id 4143 --label keylabel2 --pin mynewpin
+pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-objects
+
+
+    Using slot 0 with a present token (0x2c96f230)
+    Key pair generated:
+    Private Key Object; EC
+      label:      keylabel2
+      ID:         4143
+      Usage:      decrypt, sign, signRecover, unwrap, derive
+      Access:     sensitive, always sensitive, never extractable, local
+    Public Key Object; EC  EC_POINT 256 bits
+      EC_POINT:   044104dcc4323391be0ceb645d35aa50f7d79aaacf7c72804edbbde8606598d19fe4b1d03116368eca01755eec8f0ab84ab3e9ea8f9e0573a704cab3acee6c176ca1fa
+      EC_PARAMS:  06082a8648ce3d030107 (OID 1.2.840.10045.3.1.7)
+      label:      keylabel2
+      ID:         4143
+      Usage:      encrypt, verify, verifyRecover, wrap, derive
+      Access:     local
+
 ```
 
 
@@ -133,20 +156,31 @@ $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --
 # cd examples/
 $ go run main.go 
 
-$ go run main.go 
-2022/10/03 06:26:19      PublicKey: 
+2024/04/01 14:48:17 -------------- RS256 --------------
+2024/04/01 14:48:17      PublicKey: 
 -----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4qjbdskV5yP/dOKVPTe4
-S9HxnVC9wP1NqS/sqqQ4ZDXu5Ffkv/6hlefHj99W27jEaAA6iEK2U7qQKVsDJqAq
-G888ZA+72NnxZ6FKUI7d7o+gZP8p/sTyfLdNmIhlRWclAahS6/845jThUf/OkZi4
-54gRT2RECDRSwfU/qOLCKUPc7Adpc14MNrzD52Grozj4MyzNInVJWP3rBSMfyDT9
-CULfrhc2FlqdkQsp4F2QY6CLXixQxVXW/ejjTezlFWz9a6tqFQV3jfYY6qBYAdDF
-0/U5IlVYTeMAU4Sjfmum7JdAHx6HpAw6mGIQG5w1LzEaTggmavd/dkyywI7yZC7A
-iQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtebtcB+ALODS+CMaNTF7
+xSG8Tgu9M/W5JX9+8a9MaADfxkHEKF7P/y0OtGqDJLo0/REmyCRmEtMSs0cJuD2E
+ysSIma6T2+rtGJDYKgrKe9v2/0Y2K6QEqDVuPw/gdpyn2KxoZehb1jTASvh0Cuf3
+LYDCma35HyWzbbQaFtaTCbCpsNXADHF99BFG/o86rwBHyMBvSjI3SnnbvCLGU6P3
+BO0kv4L/+oI/lBg6d65xhcin+/d28FaH4fhejw3KfnXi5jkEjGG9So/M3fvS1s9v
+99Jb3ya73DfkBI2GS/huDQYbsksTfwSI5FdEqvO2xbdmWkiww2ZvgYM8u6rWgQ13
+owIDAQAB
 -----END PUBLIC KEY-----
-2022/10/03 06:26:19 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6InJTcGs2S050TXhvejNuYW9tTFNnWDJGVlBaZ2cxajVnMVJIWVVkamE0U2ciLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE2NjQ3OTI4MzksImlzcyI6InRlc3QifQ.H_iag9Cm1O9jWkDnayz0grz4dEpWoIoYaoqptwGGnOn8qNBzNQCspk3jMpKV-rFnxAiRfslqnI8-Y8cObqtZxoJ9f7DfnqUycJGG-4yG7m1-VYdOcJe3LIH0mtqdHOf_XtlXaLxKpiCxnMn0H9WL541SW3JwONvLIKHeZgsn2j03I9bsN5k7-cHzofowIf_iPAF-N9GoTt0ukh0FdIcQYOH4mU5XVE_zObTmF-bfQ_83pLYcOEUDDMm9Tv6Mnw9_GqUtuqLN-4X_17jXaGjQm7pEapaDdvKWiEZkWtcKxu0PA6hXjcsHVN7WH5g4YaRoXlGLKFH6Nmu6hIMYFqewBg
-2022/10/03 06:26:19      verified with PublicKey
-2022/10/03 06:26:19      verified with exported PubicKey
+2024/04/01 14:48:17 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1IiwidHlwIjoiSldUIn0.eyJleHAiOjE3MTE5OTczNTcsImlzcyI6InRlc3QifQ.C3aEltWbFZD2Rk9GazXt5DTgqqxz2lCmgqCfYnMNU_-JGfO51UFGyzlVVKcE7OY2CkmsyETPIhvEeLR4w_HioxxZ-3jGlggcNDsUk11nUx4LW4ZS8jijfHD7HDfCrIm--VG_BR1Q6wFis5EIMtyI7bmntbuqnnaviDyDro85sziISx3Jew-5UYzrMncq13Y2xTibwZBwVtvJegqDXvVB8R6k7BmA2GvYpVS6yzKg3hCx0jA69VDb0bLMGeWoqIQiV8yS3dDbaRDTmd_Q-OfQIbQFM352SPi1oy8JIjXGny6yZSHpY4G9dI6wt-Ev4VWrWZpXyBrqRzAy7n-LTvF19w
+2024/04/01 14:48:17      verified with PublicKey
+2024/04/01 14:48:17      verified with exported PubicKey
+
+
+2024/04/01 14:48:17 -------------- ES256 --------------
+2024/04/01 14:48:17      PublicKey: 
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3MQyM5G+DOtkXTWqUPfXmqrPfHKA
+Ttu96GBlmNGf5LHQMRY2jsoBdV7sjwq4SrPp6o+eBXOnBMqzrO5sF2yh+g==
+-----END PUBLIC KEY-----
+2024/04/01 14:48:17 Token: eyJhbGciOiJFUzI1NiIsImtpZCI6IjEyMzQ1IiwidHlwIjoiSldUIn0.eyJleHAiOjE3MTE5OTczNTcsImlzcyI6InRlc3QifQ.1yA3w7o0lT27feCzsuVMUWLVWjLelKOY9Vu0Da1-LsWI7Bl5AE73sTRt9KOeKVT0Hc8UczQ2ZSz-V95X7-2ejQ
+2024/04/01 14:48:17      verified with PublicKey
+2024/04/01 14:48:17      verified with exported PubicKey
 
 
 ```
