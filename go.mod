@@ -1,6 +1,6 @@
 module github.com/salrashid123/golang-jwt-pkcs11
 
-go 1.17
+go 1.20
 
 require (
 	github.com/ThalesIgnite/crypto11 v1.2.5
