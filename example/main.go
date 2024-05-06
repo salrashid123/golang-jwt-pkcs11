@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	pk "github.com/salrashid123/golang-jwt-pkcs11"
 )
 
@@ -20,8 +20,8 @@ func main() {
 	log.Println("-------------- RS256 --------------")
 
 	var keyctx interface{}
-	claims := &jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(time.Minute * 1).Unix(),
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: &jwt.NumericDate{time.Now().Add(time.Minute * 1)},
 		Issuer:    "test",
 	}
 
@@ -30,7 +30,7 @@ func main() {
 
 	var slotNum = new(int)
 	var err error
-	// export SOFTHSM2_CONF=/home/srashid/Desktop/misc/soft_hsm/softhsm.conf
+	// export SOFTHSM2_CONF=/path/to/golang-jwt-pkcs11/test_data/softhsm.conf
 	//
 	// SoftHSM
 	// *slotNum = 859281362 // softhsm2-util --show-slots
@@ -42,10 +42,10 @@ func main() {
 		Pin:        "mynewpin",
 		TokenLabel: "token1",
 		KeyLabel:   "keylabel1",
-		KeyID:      "12345",
+		KeyID:      "PmJ7zJfczbvQeeU/kdFtjxgdrWqSm+SbcuFrfa7A7u8=",
 		//PKCS_ID:    hex_id,
 		//SlotNumber: slotNum,
-		Path: "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
+		Path: "/usr/lib/softhsm/libsofthsm2.so",
 	}
 
 	// Yubikey

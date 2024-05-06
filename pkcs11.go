@@ -5,14 +5,13 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"math/big"
 
 	"encoding/asn1"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 
 	"github.com/ThalesIgnite/crypto11"
 )
@@ -130,23 +129,23 @@ func (s *SigningMethodPK) Hash() crypto.Hash {
 	return s.hasher
 }
 
-func (s *SigningMethodPK) Sign(signingString string, key interface{}) (string, error) {
+func (s *SigningMethodPK) Sign(signingString string, key interface{}) ([]byte, error) {
 	var ctx context.Context
 
 	switch k := key.(type) {
 	case context.Context:
 		ctx = k
 	default:
-		return "", jwt.ErrInvalidKey
+		return nil, jwt.ErrInvalidKey
 	}
 	config, ok := YKFromContext(ctx)
 	if !ok {
-		return "", errMissingConfig
+		return nil, errMissingConfig
 	}
 
 	cryptoctx, err := crypto11.Configure(&config.crypto11Config)
 	if err != nil {
-		return "", fmt.Errorf("error loading cryptctx %v", err)
+		return nil, fmt.Errorf("error loading cryptctx %v", err)
 	}
 	defer cryptoctx.Close()
 
@@ -160,18 +159,18 @@ func (s *SigningMethodPK) Sign(signingString string, key interface{}) (string, e
 		priv, err = cryptoctx.FindKeyPair(config.PKCS_ID, []byte(config.KeyLabel))
 	}
 	if err != nil {
-		return "", fmt.Errorf("could not init Crypto.signer %v", err)
+		return nil, fmt.Errorf("could not init Crypto.signer %v", err)
 	}
 
 	if priv == nil {
-		return "", fmt.Errorf("could not find KeyPair %v", err)
+		return nil, fmt.Errorf("could not find KeyPair %v", err)
 	}
 
 	message := []byte(signingString)
 	hasher := s.Hash().New()
 	_, err = hasher.Write(message)
 	if err != nil {
-		return "", fmt.Errorf("error hashing key: %v", err)
+		return nil, fmt.Errorf("error hashing key: %v", err)
 	}
 
 	hashed := hasher.Sum(message[:0])
@@ -180,12 +179,12 @@ func (s *SigningMethodPK) Sign(signingString string, key interface{}) (string, e
 
 	signer, ok := priv.(crypto.Signer)
 	if !ok {
-		return "", fmt.Errorf("expected private key to implement crypto.Signer")
+		return nil, fmt.Errorf("expected private key to implement crypto.Signer")
 	}
 
 	signedBytes, err := signer.Sign(rng, hashed, crypto.SHA256)
 	if err != nil {
-		return "", fmt.Errorf(" error from signing from YubiKey: %v", err)
+		return nil, fmt.Errorf(" error from signing from YubiKey: %v", err)
 	}
 
 	if s.alg == "ES256" {
@@ -201,15 +200,15 @@ func (s *SigningMethodPK) Sign(signingString string, key interface{}) (string, e
 			R, S *big.Int
 		}
 		if _, err := asn1.Unmarshal(signedBytes, &esig); err != nil {
-			return "", err
+			return nil, err
 		}
 
 		esig.R.FillBytes(out[0:keyBytes])
 		esig.S.FillBytes(out[keyBytes:])
-		return base64.RawURLEncoding.EncodeToString(out), nil
+		return out, nil
 	}
 
-	return base64.RawURLEncoding.EncodeToString(signedBytes), nil
+	return signedBytes, nil
 }
 
 func YKVerfiyKeyfunc(ctx context.Context, config *PKConfig) (jwt.Keyfunc, error) {
@@ -218,6 +217,6 @@ func YKVerfiyKeyfunc(ctx context.Context, config *PKConfig) (jwt.Keyfunc, error)
 	}, nil
 }
 
-func (s *SigningMethodPK) Verify(signingString, signature string, key interface{}) error {
-	return s.override.Verify(signingString, signature, key)
+func (s *SigningMethodPK) Verify(signingString string, signature []byte, key interface{}) error {
+	return s.override.Verify(signingString, []byte(signature), key)
 }

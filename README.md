@@ -28,113 +28,103 @@ for reference, see
 
 First [install softHSM](https://github.com/opendnssec/SoftHSMv2).
 
-Then make create a key and generate a JWT
+You can either use the pregenerated data here in the `test_data/` folder or create a key and generate a JWT
+
+To use the pregenerated softhsm config, edit `softhsm.conf` and set the absolute path of `directories.tokendir = /path/to/golang-jwt-pkcs11/test_data`, then set
+
+```bash
+export SOFTHSM2_CONF=/path/to/golang-jwt-pkcs11/test_data/softhsm.conf 
+```
+
+To generate a new keyset from scratch:
 
 ```bash
 sudo apt-get install libsofthsm2-dev opensc
-
 mkdir -p $HOME/soft_hsm/tokens
 
-$ cat /path/to/softhsm.conf 
+## edit softhsm.conf and set the absolute value of path
+$ cat /path/to/test_data/softhsm.conf 
 log.level = DEBUG
 objectstore.backend = file
 directories.tokendir = /path/to/soft_hsm/tokens
 slots.removable = true
 
-export SOFTHSM2_CONF=/path/to/softhsm.conf
+export SOFTHSM2_CONF=/path/to/golang-jwt-pkcs11/softhsm.conf
 
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --slot-index=0 --init-token --label="token1" --so-pin="123456"
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --label="token1" --init-pin --so-pin "123456" --pin mynewpin
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --list-mechanisms --slot-index 0
 
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --list-token-slots
-      Available slots:
-      Slot 0 (0x54349ba6): SoftHSM slot ID 0x54349ba6
-        token label        : token1
-        token manufacturer : SoftHSM project
-        token model        : SoftHSM v2
-        token flags        : login required, rng, token initialized, PIN initialized, other flags=0x20
-        hardware version   : 2.6
-        firmware version   : 2.6
-        serial num         : bae0cdf454349ba6
-        pin min/max        : 4/255
-      Slot 1 (0x1): SoftHSM slot ID 0x1
-        token state:   uninitialized
+
+    Available slots:
+    Slot 0 (0x5a08e6cf): SoftHSM slot ID 0x5a08e6cf
+      token label        : token1
+      token manufacturer : SoftHSM project
+      token model        : SoftHSM v2
+      token flags        : login required, rng, token initialized, PIN initialized, other flags=0x20
+      hardware version   : 2.6
+      firmware version   : 2.6
+      serial num         : c7ce2755da08e6cf
+      pin min/max        : 4/255
+    Slot 1 (0x1): SoftHSM slot ID 0x1
+      token state:   uninitialized
+
 
 
 $ softhsm2-util --show-slots
-      Available slots:
-      Slot 859281362
-          Slot info:
-              Description:      SoftHSM slot ID 0x333797d2                                      
-              Manufacturer ID:  SoftHSM project                 
-              Hardware version: 2.6
-              Firmware version: 2.6
-              Token present:    yes
-          Token info:
-              Manufacturer ID:  SoftHSM project                 
-              Model:            SoftHSM v2      
-              Hardware version: 2.6
-              Firmware version: 2.6
-              Serial number:    0c1edf42333797d2
-              Initialized:      yes
-              User PIN init.:   yes
-              Label:            token1                          
-      Slot 1
-          Slot info:
-              Description:      SoftHSM slot ID 0x1                                             
-              Manufacturer ID:  SoftHSM project                 
-              Hardware version: 2.6
-              Firmware version: 2.6
-              Token present:    yes
-          Token info:
-              Manufacturer ID:  SoftHSM project                 
-              Model:            SoftHSM v2      
-              Hardware version: 2.6
-              Firmware version: 2.6
-              Serial number:                    
-              Initialized:      no
-              User PIN init.:   no
-              Label:               
+
+    Available slots:
+    Slot 1510532815
+        Slot info:
+            Description:      SoftHSM slot ID 0x5a08e6cf                                      
+            Manufacturer ID:  SoftHSM project                 
+            Hardware version: 2.6
+            Firmware version: 2.6
+            Token present:    yes
+        Token info:
+            Manufacturer ID:  SoftHSM project                 
+            Model:            SoftHSM v2      
+            Hardware version: 2.6
+            Firmware version: 2.6
+            Serial number:    c7ce2755da08e6cf
+            Initialized:      yes
+            User PIN init.:   yes
+            Label:            token1                          
+    Slot 1
+        Slot info:
+            Description:      SoftHSM slot ID 0x1                                             
+            Manufacturer ID:  SoftHSM project                 
+            Hardware version: 2.6
+            Firmware version: 2.6
+            Token present:    yes
+        Token info:
+            Manufacturer ID:  SoftHSM project                 
+            Model:            SoftHSM v2      
+            Hardware version: 2.6
+            Firmware version: 2.6
+            Serial number:                    
+            Initialized:      no
+            User PIN init.:   no
+            Label:          
 
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --key-type rsa:2048 --id 4142 --label keylabel1 --pin mynewpin
-      Using slot 0 with a present token (0x1ccdc205)
-      Key pair generated:
-      Private Key Object; RSA 
-        label:      keylabel1
-        ID:         4142
-        Usage:      decrypt, sign, unwrap
-        Access:     sensitive, always sensitive, never extractable, local
-      Public Key Object; RSA 2048 bits
-        label:      keylabel1
-        ID:         4142
-        Usage:      encrypt, verify, wrap
-        Access:     local
+    Using slot 0 with a present token (0x5a08e6cf)
+    Key pair generated:
+    Private Key Object; RSA
+      label:      keylabel1
+      ID:         4142
+      Usage:      decrypt, sign, signRecover, unwrap
+      Access:     sensitive, always sensitive, never extractable, local
+    Public Key Object; RSA 2048 bits
+      label:      keylabel1
+      ID:         4142
+      Usage:      encrypt, verify, verifyRecover, wrap
+      Access:     local
 
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --key-type ec:prime256v1 --id 4143 --label keylabel2 --pin mynewpin
 
-      Using slot 0 with a present token (0x1ccdc205)
-      Public Key Object; RSA 2048 bits
-        label:      keylabel1
-        ID:         4142
-        Usage:      encrypt, verify, wrap
-        Access:     local
-
-
-    $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-objects
-      Using slot 0 with a present token (0x333797d2)
-      Public Key Object; RSA 2048 bits
-        label:      keylabel1
-        ID:         4142
-        Usage:      encrypt, verify, wrap
-        Access:     local
-
-
-### now create an EC key   p256 oid=1.2.840.10045.3.1.7
-pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --key-type ec:prime256v1 --id 4143 --label keylabel2 --pin mynewpin
-pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-objects
-
-
-    Using slot 0 with a present token (0x2c96f230)
+    Using slot 0 with a present token (0x5a08e6cf)
     Key pair generated:
     Private Key Object; EC
       label:      keylabel2
@@ -142,7 +132,7 @@ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-ob
       Usage:      decrypt, sign, signRecover, unwrap, derive
       Access:     sensitive, always sensitive, never extractable, local
     Public Key Object; EC  EC_POINT 256 bits
-      EC_POINT:   044104dcc4323391be0ceb645d35aa50f7d79aaacf7c72804edbbde8606598d19fe4b1d03116368eca01755eec8f0ab84ab3e9ea8f9e0573a704cab3acee6c176ca1fa
+      EC_POINT:   0441041c83a886c449b9a0ee75d39d6e68f46b6fde30b29c029194073b7089d795eac7b2c76c536f108e99931c5e8abf64ba21da3dd123406805b077e7bab942129cce
       EC_PARAMS:  06082a8648ce3d030107 (OID 1.2.840.10045.3.1.7)
       label:      keylabel2
       ID:         4143
@@ -151,38 +141,37 @@ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-ob
 
 ```
 
+then to run,
 
 ```log
 # cd examples/
 $ go run main.go 
 
-2024/04/01 14:48:17 -------------- RS256 --------------
-2024/04/01 14:48:17      PublicKey: 
+2024/05/05 14:23:29 -------------- RS256 --------------
+2024/05/05 14:23:29      PublicKey: 
 -----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtebtcB+ALODS+CMaNTF7
-xSG8Tgu9M/W5JX9+8a9MaADfxkHEKF7P/y0OtGqDJLo0/REmyCRmEtMSs0cJuD2E
-ysSIma6T2+rtGJDYKgrKe9v2/0Y2K6QEqDVuPw/gdpyn2KxoZehb1jTASvh0Cuf3
-LYDCma35HyWzbbQaFtaTCbCpsNXADHF99BFG/o86rwBHyMBvSjI3SnnbvCLGU6P3
-BO0kv4L/+oI/lBg6d65xhcin+/d28FaH4fhejw3KfnXi5jkEjGG9So/M3fvS1s9v
-99Jb3ya73DfkBI2GS/huDQYbsksTfwSI5FdEqvO2xbdmWkiww2ZvgYM8u6rWgQ13
-owIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6Nf7IY7aFlF05+PrP98
+I9W8Pghj8iaE47DIAlwFZwtz65X7K0Q+jSndQ807NCejeQoCBjfxJVzU1e0oF6Pi
+zeTRPd9lyDFZPHhBeMKt59zFcks4qGRGHSm2s+gclW5bjPzTIyVVcsR6qq7MKEmr
+stDpkvTCUzJgAIJvMVRKq4NmERcaoH9LZFoU2tl9J15i93Vd2ldU27XFPxuzL53E
+ASwmb/3ykiMhzSOWcfXmkTelUabVPG1BRtLnvB+1Ke9UM4xxviU+H9k3NyhJmLME
+xF/IyjtF8Uo9tO4kVJi9Gwri1cWvWCl9imEfbyEsnvOYySKjxwsfrWyZeioPtnAL
+vwIDAQAB
 -----END PUBLIC KEY-----
-2024/04/01 14:48:17 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1IiwidHlwIjoiSldUIn0.eyJleHAiOjE3MTE5OTczNTcsImlzcyI6InRlc3QifQ.C3aEltWbFZD2Rk9GazXt5DTgqqxz2lCmgqCfYnMNU_-JGfO51UFGyzlVVKcE7OY2CkmsyETPIhvEeLR4w_HioxxZ-3jGlggcNDsUk11nUx4LW4ZS8jijfHD7HDfCrIm--VG_BR1Q6wFis5EIMtyI7bmntbuqnnaviDyDro85sziISx3Jew-5UYzrMncq13Y2xTibwZBwVtvJegqDXvVB8R6k7BmA2GvYpVS6yzKg3hCx0jA69VDb0bLMGeWoqIQiV8yS3dDbaRDTmd_Q-OfQIbQFM352SPi1oy8JIjXGny6yZSHpY4G9dI6wt-Ev4VWrWZpXyBrqRzAy7n-LTvF19w
-2024/04/01 14:48:17      verified with PublicKey
-2024/04/01 14:48:17      verified with exported PubicKey
+2024/05/05 14:23:29 Token: eyJhbGciOiJSUzI1NiIsImtpZCI6IlBtSjd6SmZjemJ2UWVlVS9rZEZ0anhnZHJXcVNtK1NiY3VGcmZhN0E3dTg9IiwidHlwIjoiSldUIn0.eyJpc3MiOiJ0ZXN0IiwiZXhwIjoxNzE0OTMzNDY5fQ.qfrX9dApibMueZQZOzcnc_DKNeszM_soKfPO1e_-fwpa8eTH2pBHkpHsowcSrWN7Ci9pb9EPDtkMIxE5qC6y1Szn_xwdIwSCkto-YUvAUCP2m6SLgBu4XRPvDHkCrCux7QVJql93ndstskmI8Vf8fJ4cAMzDwRDIoChxeiCkOK49uqhCIx5nhB8Ezmq4ud6x2QIBkO3uv2HWMM00AZBHBoo6AQVVBGVE05fW99gvCiZxwE0mMsi1rgFKFo4bpKVlVMFPYmL_i07dUk4Y4EIjkiJb-PrFkRAwystr2AaAdvPxOHAWJlp0K_7FZC1yuPMmAf78elqEJLnWJ_7wr_T25A
+2024/05/05 14:23:29      verified with PublicKey
+2024/05/05 14:23:29      verified with exported PubicKey
 
 
-2024/04/01 14:48:17 -------------- ES256 --------------
-2024/04/01 14:48:17      PublicKey: 
+2024/05/05 14:23:29 -------------- ES256 --------------
+2024/05/05 14:23:29      PublicKey: 
 -----BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3MQyM5G+DOtkXTWqUPfXmqrPfHKA
-Ttu96GBlmNGf5LHQMRY2jsoBdV7sjwq4SrPp6o+eBXOnBMqzrO5sF2yh+g==
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEHIOohsRJuaDuddOdbmj0a2/eMLKc
+ApGUBztwideV6seyx2xTbxCOmZMcXoq/ZLoh2j3RI0BoBbB357q5QhKczg==
 -----END PUBLIC KEY-----
-2024/04/01 14:48:17 Token: eyJhbGciOiJFUzI1NiIsImtpZCI6IjEyMzQ1IiwidHlwIjoiSldUIn0.eyJleHAiOjE3MTE5OTczNTcsImlzcyI6InRlc3QifQ.1yA3w7o0lT27feCzsuVMUWLVWjLelKOY9Vu0Da1-LsWI7Bl5AE73sTRt9KOeKVT0Hc8UczQ2ZSz-V95X7-2ejQ
-2024/04/01 14:48:17      verified with PublicKey
-2024/04/01 14:48:17      verified with exported PubicKey
-
-
+2024/05/05 14:23:29 Token: eyJhbGciOiJFUzI1NiIsImtpZCI6IjEyMzQ1IiwidHlwIjoiSldUIn0.eyJpc3MiOiJ0ZXN0IiwiZXhwIjoxNzE0OTMzNDY5fQ.MA8h5rB5Sl_tv5yaOWJoeHj6OKX2nBJfCjuc2DgPLmGyQ7vzqUFRPshXrTEjCjtdNTagKAkq3-geo3iKIhFJSA
+2024/05/05 14:23:29      verified with PublicKey
+2024/05/05 14:23:29      verified with exported PubicKey
 ```
 
 The JWT is formatted as:
@@ -190,26 +179,26 @@ The JWT is formatted as:
 ```json
 {
   "alg": "RS256",
-  "kid": "rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg",
+  "kid": "PmJ7zJfczbvQeeU/kdFtjxgdrWqSm+SbcuFrfa7A7u8=",
   "typ": "JWT"
 }
 {
-  "exp": 1664792839,
-  "iss": "test"
+  "iss": "test",
+  "exp": 1714933469
 }
 ```
 
 Where the `keyID` is the base64 encoded hash of the DER public key as shown below (it can be anything you want)
 
 ```bash
-$ openssl rsa -pubin -in publickey.pem -outform DER | openssl sha256
+$ openssl rsa -pubin -in rsapublic.pem -outform DER | openssl sha256
 writing RSA key
-SHA256(stdin)= ad2a64e8a36d331a33de76a898b4a05f61553d9820d63e60d511d851d8dae128
+SHA256(stdin)= 3e627bcc97dccdbbd079e53f91d16d8f181dad6a929be49b72e16b7daec0eeef
 
-# base64 of hex ad2a64e8a36d331a33de76a898b4a05f61553d9820d63e60d511d851d8dae128 --> rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg
+# base64 of hex 3e627bcc97dccdbbd079e53f91d16d8f181dad6a929be49b72e16b7daec0eeef --> PmJ7zJfczbvQeeU/kdFtjxgdrWqSm+SbcuFrfa7A7u8=
 ```
 
-to use, just import the library (`"github.com/salrashid123/golang-jwt-pkcs11"`) configure the Yubikey wiht the pin.  Remember to set the override so that the correct `alg` is defined in the JWT header
+to use, just import the library (`"github.com/salrashid123/golang-jwt-pkcs11"`) configure the Yubikey with the pin.  Remember to set the override so that the correct `alg` is defined in the JWT header
 
 ```golang
 package main
@@ -252,7 +241,7 @@ func main() {
 		Pin:        "mynewpin",
 		TokenLabel: "token1",
 		KeyLabel:   "keylabel1",
-    KeyId:      "rSpk6KNtMxoz3naomLSgX2FVPZgg1j5g1RHYUdja4Sg",
+		KeyId:      "PmJ7zJfczbvQeeU/kdFtjxgdrWqSm+SbcuFrfa7A7u8=",
 		//PKCS_ID:    hex_id,
 		//SlotNumber: slotNum,
 		Path: "/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
