@@ -124,6 +124,47 @@ func TestPKCSRSA(t *testing.T) {
 	require.True(t, vtoken.Valid)
 }
 
+func TestPKCSRSAPSS(t *testing.T) {
+
+	t.Setenv("SOFTHSM2_CONF", confPath)
+
+	ctx := context.Background()
+
+	SigningMethodPKPS256.Override()
+	config := &PKConfig{
+		Pin:        "mynewpin",
+		TokenLabel: "token1",
+		KeyLabel:   "keylabel1",
+		KeyID:      "PmJ7zJfczbvQeeU/kdFtjxgdrWqSm+SbcuFrfa7A7u8=",
+		Path:       lib,
+	}
+
+	_, err := NewPKContext(ctx, config)
+	require.NoError(t, err)
+
+	issuer := "test"
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: &jwt.NumericDate{time.Now().Add(time.Minute * 1)},
+		Issuer:    issuer,
+	}
+	token := jwt.NewWithClaims(SigningMethodPKRS256, claims)
+
+	keyctx, err := NewPKContext(ctx, config)
+	require.NoError(t, err)
+
+	tokenString, err := token.SignedString(keyctx)
+	require.NoError(t, err)
+
+	// verify with TPM based publicKey
+	keyFunc, err := YKVerfiyKeyfunc(context.Background(), config)
+	require.NoError(t, err)
+
+	vtoken, err := jwt.Parse(tokenString, keyFunc)
+	require.NoError(t, err)
+
+	require.True(t, vtoken.Valid)
+}
+
 func TestTPMClaim(t *testing.T) {
 	t.Setenv("SOFTHSM2_CONF", confPath)
 

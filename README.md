@@ -20,6 +20,7 @@ for reference, see
 ### Supported Algorithms
 
 * `RS256`
+* `PS256`
 * `ES256`
 
 (i just didn't'' have the time to account for the additional types)
@@ -143,8 +144,9 @@ $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --
 
 then to run,
 
-```log
-# cd examples/
+```bash
+$ export SOFTHSM2_CONF=/full/path/to/golang-jwt-pkcs11/test_data/softhsm.conf 
+$ cd examples/
 $ go run main.go 
 
 2024/05/05 14:23:29 -------------- RS256 --------------

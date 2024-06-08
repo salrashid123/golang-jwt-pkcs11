@@ -134,6 +134,36 @@ func main() {
 
 	// ****************************************************************
 
+	log.Println("-------------- PS256 --------------")
+
+	pk.SigningMethodPKPS256.Override()
+	psstoken := jwt.NewWithClaims(pk.SigningMethodPKPS256, claims)
+
+	psstokenString, err := psstoken.SignedString(keyctx)
+	if err != nil {
+		log.Fatalf("Error signing %v", err)
+	}
+
+	log.Printf("Token: %s", psstokenString)
+
+	pssvtoken, err := jwt.Parse(psstokenString, keyFunc)
+	if err != nil {
+		log.Fatalf("Error verifying token %v", err)
+	}
+	if pssvtoken.Valid {
+		log.Println("     verified with PublicKey")
+	}
+
+	pssv, err := jwt.Parse(pssvtoken.Raw, func(token *jwt.Token) (interface{}, error) {
+		return pubKey, nil
+	})
+	if err != nil {
+		log.Printf("     Error Parsing %v", err)
+	}
+	if pssv.Valid {
+		log.Println("     verified with exported PubicKey")
+	}
+
 	log.Println("-------------- ES256 --------------")
 	// ES256
 

@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"math/big"
@@ -39,8 +40,8 @@ func (k *PKConfig) GetPublicKey() crypto.PublicKey {
 }
 
 var (
-	SigningMethodPKRS128 *SigningMethodPK
 	SigningMethodPKRS256 *SigningMethodPK
+	SigningMethodPKPS256 *SigningMethodPK
 	SigningMethodPKES256 *SigningMethodPK
 	errMissingConfig     = errors.New("pp: missing configuration in provided context")
 	errMissingYK         = errors.New("pk: YK device not available")
@@ -99,6 +100,16 @@ func init() {
 	}
 	jwt.RegisterSigningMethod(SigningMethodPKRS256.Alg(), func() jwt.SigningMethod {
 		return SigningMethodPKRS256
+	})
+
+	// PS256
+	SigningMethodPKPS256 = &SigningMethodPK{
+		"PKPS256",
+		jwt.SigningMethodPS256,
+		crypto.SHA256,
+	}
+	jwt.RegisterSigningMethod(SigningMethodPKPS256.Alg(), func() jwt.SigningMethod {
+		return SigningMethodPKPS256
 	})
 
 	// ES256
@@ -182,9 +193,23 @@ func (s *SigningMethodPK) Sign(signingString string, key interface{}) ([]byte, e
 		return nil, fmt.Errorf("expected private key to implement crypto.Signer")
 	}
 
-	signedBytes, err := signer.Sign(rng, hashed, crypto.SHA256)
-	if err != nil {
-		return nil, fmt.Errorf(" error from signing from YubiKey: %v", err)
+	var signedBytes []byte
+	if s.Alg() == "PS256" {
+		sopts := &rsa.PSSOptions{
+			Hash:       s.Hash(),
+			SaltLength: rsa.PSSSaltLengthEqualsHash,
+		}
+		signedBytes, err = signer.Sign(rng, hashed, sopts)
+		if err != nil {
+			return nil, fmt.Errorf(" error from signing from PKCS11 PSS: %v", err)
+		}
+
+	} else {
+		signedBytes, err = signer.Sign(rng, hashed, s.Hash())
+		if err != nil {
+			return nil, fmt.Errorf(" error from signing from PKCS11: %v", err)
+		}
+
 	}
 
 	if s.alg == "ES256" {
