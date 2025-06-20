@@ -14,7 +14,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
-	"github.com/ThalesIgnite/crypto11"
+	"github.com/ThalesGroup/crypto11"
 )
 
 type PKConfig struct {
@@ -22,6 +22,7 @@ type PKConfig struct {
 	Path            string
 	PKCS_ID         []byte
 	TokenLabel      string
+	TokenSerial     string
 	KeyLabel        string
 	Pin             string
 	SlotNumber      *int
@@ -44,7 +45,6 @@ var (
 	SigningMethodPKPS256 *SigningMethodPK
 	SigningMethodPKES256 *SigningMethodPK
 	errMissingConfig     = errors.New("pp: missing configuration in provided context")
-	errMissingYK         = errors.New("pk: YK device not available")
 )
 
 type SigningMethodPK struct {
@@ -56,10 +56,27 @@ type SigningMethodPK struct {
 func NewPKContext(parent context.Context, val *PKConfig) (context.Context, error) {
 
 	crypto11Config := &crypto11.Config{
-		Path:       val.Path,
-		TokenLabel: val.TokenLabel,
-		SlotNumber: val.SlotNumber,
-		Pin:        val.Pin,
+		Path: val.Path,
+		Pin:  val.Pin,
+	}
+
+	valset := 0
+	if val.TokenLabel != "" {
+		crypto11Config.TokenLabel = val.TokenLabel
+		valset++
+	}
+	if val.SlotNumber != nil {
+		crypto11Config.SlotNumber = val.SlotNumber
+		valset++
+	}
+
+	if val.TokenSerial != "" {
+		crypto11Config.TokenSerial = val.TokenSerial
+		valset++
+	}
+
+	if valset != 1 {
+		return nil, fmt.Errorf("pkcsjwt: exactly one of tokenlabel or slotnumber or tokenserial must be specified")
 	}
 
 	cryptoctx, err := crypto11.Configure(crypto11Config)
